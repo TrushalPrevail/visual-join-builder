@@ -2,6 +2,9 @@
   "name": "visual-join-builder-",
   "displayName": "Visual Join Builder ",
   "description": "Visually join DataFrames and generate Pandas/SQL code.",
+  "sponsor": {
+    "url": "https://ko-fi.com/trushalprevail"
+  },
   "icon": "media/icon.png",
   "version": "0.0.1",
   "engines": {

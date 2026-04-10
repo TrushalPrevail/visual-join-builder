@@ -1,5 +1,19 @@
-out
-dist
-node_modules
+# Build outputs
+dist/
+out/
+webview-ui/dist/
+webview-ui/dist-ssr/
+docs/
+
+# Dependencies
+node_modules/
+webview-ui/node_modules/
+
+# Local packaging and test artifacts
 .vscode-test/
 *.vsix
+
+# Logs and OS/editor noise
+*.log
+.DS_Store
+Thumbs.db

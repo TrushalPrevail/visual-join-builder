@@ -1,21 +1,32 @@
-.vscode/**
-.vscode-test/**
-out/**
-node_modules/**
-src/**
-.gitignore
-.yarnrc
+# VS Code / local test harness
+.vscode/
+.vscode-test/
+**/.vscode-test.*
+
+# Source, docs, and tests (ship compiled output only)
+src/
+src/__tests__/
+docs/
+out/
+webview-ui/**
+!webview-ui/build/
+!webview-ui/build/**
+
+# Tooling and config files not needed in VSIX
 esbuild.js
+jest.config.cjs
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/eslint.config.mjs
-**/*.map
 **/*.ts
-**/.vscode-test.*
-webview-ui/src/
-webview-ui/node_modules/
-webview-ui/vite.config.ts
-src/__tests__/
-docs/
-.git/
+**/*.tsx
+**/*.map
+
+# Dependencies and VCS metadata
 node_modules/
+.git/
+.gitignore
+.yarnrc
+
+# Local package outputs
+*.vsix

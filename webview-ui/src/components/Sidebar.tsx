@@ -91,6 +91,16 @@ export function Sidebar({ tables, kernelActive, kernelName, onRefresh, floating 
           </button>
         )}
       </div>
+      <div className="p-4 border-t border-border-subtle mt-auto">
+        <a
+          href="https://ko-fi.com/trushalprevail"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center w-full py-2 px-4 bg-[#29abe0]/10 hover:bg-[#29abe0]/20 text-[#29abe0] border border-[#29abe0]/30 rounded-md text-xs font-semibold transition-colors no-underline"
+        >
+          ☕ Buy me a coffee
+        </a>
+      </div>
     </aside>
   );
 }

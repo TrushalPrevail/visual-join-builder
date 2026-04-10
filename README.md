@@ -1,71 +1,58 @@
-# visual-join-builder- README
+# Visual Join Builder
 
-This is the README for your extension "visual-join-builder-". After writing up a brief description, we recommend including the following sections.
+[☕ Buy me a coffee](https://ko-fi.com/trushalprevail)
 
-## Features
+Visual Join Builder is a VS Code extension for building DataFrame joins visually and generating production-ready code for **Pandas**, **DuckDB**, and **PySpark**.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## What it does
 
-For example if there is an image subfolder under your extension project workspace:
+- Drag DataFrames from the sidebar onto a visual canvas.
+- Connect table columns to create joins.
+- Change join types from:
+  - edge join controls,
+  - interactive Venn mode,
+  - selected-edge Venn overlay editing.
+- See generated code update in real time.
+- Preview results from the active Jupyter kernel.
+- Insert generated code directly into a notebook or Python editor.
 
-\!\[feature X\]\(images/feature-x.png\)
+## Key features
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **Live kernel integration**: detects DataFrames from the active/visible Jupyter notebook kernel.
+- **Manual mode fallback**: UI remains usable even when no kernel is active.
+- **Join graph UX**:
+  - auto-arranged table drops,
+  - auto-fit canvas behavior,
+  - edge and node deletion support,
+  - floating control panels.
+- **Interactive Venn editor**:
+  - clickable left/intersection/right regions,
+  - smart mapping to INNER/LEFT/RIGHT/FULL OUTER joins,
+  - guidance for unsupported region combinations.
+- **Code generation engine**:
+  - Pandas merge chains with collision handling,
+  - DuckDB SQL via `duckdb.sql(query).df()`,
+  - PySpark chained `.join()` and `.select()`.
+
+## Commands
+
+- `visual-join-builder.open` — Open Visual Join Builder.
+- `visual-join-builder.openFromCell` — Open from notebook/Python context.
+
+## CodeLens
+
+The extension adds a `✨ Visual Join` CodeLens in notebook/Python files when Pandas usage is detected.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- VS Code `^1.85.0`
+- Python/Jupyter extension (`ms-toolsai.jupyter`) for live kernel table discovery and preview
 
-## Extension Settings
+## Packaging
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+- Native sponsor metadata is configured in `package.json` (`sponsor.url`) so VS Code can show the sponsor heart on the extension page.
+- Marketplace packaging uses `.vscodeignore` to include runtime artifacts and exclude development files.
 
-For example:
+## License
 
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+See repository license and metadata files for distribution details.
