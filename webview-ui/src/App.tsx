@@ -92,16 +92,22 @@ function App() {
         copyLabel={copyLabel}
       />
       <div className="flex min-h-0 flex-1">
-        <Sidebar
-          tables={tables}
-          kernelActive={kernelActive}
-          kernelName={kernelName}
-          onRefresh={handleRefreshTables}
-        />
-        <CanvasErrorBoundary>
-          <Canvas tables={tables} clearVersion={clearVersion} onGraphChange={handleGraphChange} />
-        </CanvasErrorBoundary>
-        <CodePanel code={generatedCode} />
+        <div className="w-[220px] flex-shrink-0 [&>aside]:!w-full">
+          <Sidebar
+            tables={tables}
+            kernelActive={kernelActive}
+            kernelName={kernelName}
+            onRefresh={handleRefreshTables}
+          />
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <CanvasErrorBoundary>
+            <Canvas tables={tables} clearVersion={clearVersion} onGraphChange={handleGraphChange} />
+          </CanvasErrorBoundary>
+        </div>
+        <div className="w-[300px] flex-shrink-0 [&>aside]:!w-full">
+          <CodePanel code={generatedCode} />
+        </div>
       </div>
       <PreviewPanel joinState={joinState} disabled={insertDisabled} />
     </main>

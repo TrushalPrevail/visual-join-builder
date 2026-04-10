@@ -173,6 +173,7 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
   return (
     <div className="flex-1 min-w-0 bg-bg-base" onDrop={onDrop} onDragOver={onDragOver}>
       <ReactFlow<Node<TableNodeData>, Edge<JoinEdgeData>>
+        colorMode="dark"
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
