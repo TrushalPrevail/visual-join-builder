@@ -11,7 +11,9 @@
   ],
   "activationEvents": [
     "onCommand:visual-join-builder.open",
-    "onCommand:visual-join-builder.openFromCell"
+    "onCommand:visual-join-builder.openFromCell",
+    "onLanguage:python",
+    "onNotebook:jupyter-notebook"
   ],
   "main": "./dist/extension.js",
   "contributes": {

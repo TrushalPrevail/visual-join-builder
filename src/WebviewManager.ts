@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { NotebookInserter } from './NotebookInserter';
 import type { HostToWebviewMessage } from './types/messages';
 import { WebviewMessageZ } from './types/schemas';
 
@@ -39,7 +40,7 @@ export class WebviewManager {
 			this.panel = undefined;
 		});
 
-		this.panel.webview.onDidReceiveMessage((raw: unknown) => {
+		this.panel.webview.onDidReceiveMessage(async (raw: unknown) => {
 			const result = WebviewMessageZ.safeParse(raw);
 			if (!result.success) {
 				console.error('Invalid message from Webview:', result.error);
@@ -56,7 +57,7 @@ export class WebviewManager {
 			}
 
 			if (message.command === 'insertCode') {
-				void vscode.window.showInformationMessage(message.payload.code);
+				await NotebookInserter.insertCode(message.payload.code);
 			}
 		});
 
