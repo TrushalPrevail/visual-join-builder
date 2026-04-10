@@ -1,11 +1,15 @@
 import * as vscode from 'vscode';
+import { generateCode } from './CodeGenerator';
+import { JupyterKernel } from './JupyterKernel';
 import { NotebookInserter } from './NotebookInserter';
+import { TableDiscovery } from './TableDiscovery';
 import type { HostToWebviewMessage } from './types/messages';
 import { WebviewMessageZ } from './types/schemas';
 
 export class WebviewManager {
 	private static instance: WebviewManager | undefined;
 	private panel: vscode.WebviewPanel | undefined;
+	private tableDiscovery: TableDiscovery | undefined;
 	private readonly webviewBuildUri: vscode.Uri;
 
 	private constructor(private readonly extensionUri: vscode.Uri) {
@@ -37,7 +41,17 @@ export class WebviewManager {
 		);
 
 		this.panel.onDidDispose(() => {
+			this.tableDiscovery?.stop();
+			this.tableDiscovery = undefined;
 			this.panel = undefined;
+		});
+
+		this.panel.onDidChangeViewState((event) => {
+			if (event.webviewPanel.visible) {
+				this.tableDiscovery?.start();
+			} else {
+				this.tableDiscovery?.stop();
+			}
 		});
 
 		this.panel.webview.onDidReceiveMessage(async (raw: unknown) => {
@@ -49,18 +63,49 @@ export class WebviewManager {
 
 			const message = result.data;
 			if (message.command === 'ready') {
-				this.postMessage({
-					command: 'kernelStatus',
-					payload: { active: false }
-				});
+				await this.tableDiscovery?.forceRefresh();
 				return;
 			}
 
 			if (message.command === 'insertCode') {
 				await NotebookInserter.insertCode(message.payload.code);
+				return;
+			}
+
+			if (message.command === 'requestTables') {
+				await this.tableDiscovery?.forceRefresh();
+				return;
+			}
+
+			if (message.command === 'requestPreview') {
+				const code = generateCode(message.payload.joinState);
+				const result = await JupyterKernel.executePreview(code);
+				if (result.errorMessage) {
+					this.postMessage({
+						command: 'previewError',
+						payload: { message: result.errorMessage }
+					});
+					return;
+				}
+
+				this.postMessage({
+					command: 'previewResult',
+					payload: { html: result.html, rowCount: result.rowCount }
+				});
 			}
 		});
 
+		this.tableDiscovery = new TableDiscovery((snapshot) => {
+			this.postMessage({
+				command: 'kernelStatus',
+				payload: snapshot.kernelStatus
+			});
+			this.postMessage({
+				command: 'loadTables',
+				payload: { tables: snapshot.tables }
+			});
+		});
+		this.tableDiscovery.start();
 		this.panel.webview.html = this.getWebviewHtml(this.panel.webview);
 	}
 

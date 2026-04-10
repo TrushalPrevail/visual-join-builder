@@ -4,34 +4,15 @@ import { generateCode } from '../../src/CodeGenerator';
 import type { Dialect, TableSchema } from '../../src/types/joinState';
 import { Canvas } from './components/Canvas';
 import { CodePanel } from './components/CodePanel';
+import { PreviewPanel } from './components/PreviewPanel';
 import { Sidebar } from './components/Sidebar';
 import { Toolbar } from './components/Toolbar';
 import type { JoinEdgeData, TableNodeData } from './components/graphTypes';
 import { useJoinState } from './hooks/useJoinState';
 import { sendMessage, useVSCodeMessage } from './hooks/useVSCodeMessage';
 
-const MOCK_TABLES: TableSchema[] = [
-  {
-    name: 'df_users',
-    columns: [
-      { name: 'id', dtype: 'int64', nullable: false },
-      { name: 'name', dtype: 'object', nullable: false },
-      { name: 'email', dtype: 'object', nullable: true },
-      { name: 'created_at', dtype: 'datetime64', nullable: false },
-    ],
-  },
-  {
-    name: 'df_orders',
-    columns: [
-      { name: 'order_id', dtype: 'int64', nullable: false },
-      { name: 'user_id', dtype: 'int64', nullable: false },
-      { name: 'total', dtype: 'float64', nullable: false },
-      { name: 'created_at', dtype: 'datetime64', nullable: false },
-    ],
-  },
-];
-
 function App() {
+  const [tables, setTables] = useState<TableSchema[]>([]);
   const [kernelActive, setKernelActive] = useState(false);
   const [kernelName, setKernelName] = useState<string | undefined>(undefined);
   const [outputName, setOutputName] = useState('result_df');
@@ -41,12 +22,19 @@ function App() {
   const [clearVersion, setClearVersion] = useState(0);
   const [copied, setCopied] = useState(false);
 
-  useVSCodeMessage((message) => {
-    if (message.command === 'kernelStatus') {
-      setKernelActive(message.payload.active);
-      setKernelName(message.payload.kernelName);
-    }
-  });
+  useVSCodeMessage(
+    useCallback((message) => {
+      if (message.command === 'kernelStatus') {
+        setKernelActive(message.payload.active);
+        setKernelName(message.payload.kernelName);
+        return;
+      }
+
+      if (message.command === 'loadTables') {
+        setTables(message.payload.tables);
+      }
+    }, []),
+  );
 
   useEffect(() => {
     sendMessage({ command: 'ready' });
@@ -85,6 +73,10 @@ function App() {
     setGraphEdges(edges);
   }, []);
 
+  const handleRefreshTables = useCallback(() => {
+    sendMessage({ command: 'requestTables' });
+  }, []);
+
   return (
     <main className="h-screen bg-bg-base text-text-primary flex flex-col">
       <Toolbar
@@ -99,10 +91,16 @@ function App() {
         copyLabel={copyLabel}
       />
       <div className="flex min-h-0 flex-1">
-        <Sidebar tables={MOCK_TABLES} kernelActive={kernelActive} kernelName={kernelName} />
-        <Canvas tables={MOCK_TABLES} clearVersion={clearVersion} onGraphChange={handleGraphChange} />
+        <Sidebar
+          tables={tables}
+          kernelActive={kernelActive}
+          kernelName={kernelName}
+          onRefresh={handleRefreshTables}
+        />
+        <Canvas tables={tables} clearVersion={clearVersion} onGraphChange={handleGraphChange} />
         <CodePanel code={generatedCode} />
       </div>
+      <PreviewPanel joinState={joinState} disabled={insertDisabled} />
     </main>
   );
 }
