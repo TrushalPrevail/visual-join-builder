@@ -1,16 +1,22 @@
 import type { Edge, Node } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { generateCode } from '../../src/CodeGenerator';
-import type { Dialect, TableSchema } from '../../src/types/joinState';
+import type { Dialect, JoinType, TableSchema } from '../../src/types/joinState';
 import { Canvas } from './components/Canvas';
 import { CanvasErrorBoundary } from './components/CanvasErrorBoundary';
 import { CodePanel } from './components/CodePanel';
 import { PreviewPanel } from './components/PreviewPanel';
 import { Sidebar } from './components/Sidebar';
 import { Toolbar } from './components/Toolbar';
+import { VennOverlay } from './components/VennOverlay';
 import type { JoinEdgeData, TableNodeData } from './components/graphTypes';
 import { useJoinState } from './hooks/useJoinState';
 import { sendMessage, useVSCodeMessage } from './hooks/useVSCodeMessage';
+import { getPersistedState, persistState } from './lib/vscodeApi';
+
+interface AppPersistedState {
+  showVennOverlay?: boolean;
+}
 
 function App() {
   const [tables, setTables] = useState<TableSchema[]>([]);
@@ -20,11 +26,14 @@ function App() {
   const [dialect, setDialect] = useState<Dialect>('pandas');
   const [graphNodes, setGraphNodes] = useState<Node<TableNodeData>[]>([]);
   const [graphEdges, setGraphEdges] = useState<Edge<JoinEdgeData>[]>([]);
-  const [clearVersion, setClearVersion] = useState(0);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [previewAutoExpandVersion, setPreviewAutoExpandVersion] = useState(0);
   const [showTablesPanel, setShowTablesPanel] = useState(true);
   const [showCodePanel, setShowCodePanel] = useState(true);
+  const [showVennOverlay, setShowVennOverlay] = useState(
+    () => getPersistedState<AppPersistedState>()?.showVennOverlay ?? false,
+  );
 
   useVSCodeMessage(
     useCallback((message) => {
@@ -44,6 +53,11 @@ function App() {
     sendMessage({ command: 'ready' });
   }, []);
 
+  useEffect(() => {
+    const existing = getPersistedState<AppPersistedState>() ?? {};
+    persistState<AppPersistedState>({ ...existing, showVennOverlay });
+  }, [showVennOverlay]);
+
   const joinState = useJoinState({
     nodes: graphNodes,
     edges: graphEdges,
@@ -52,9 +66,19 @@ function App() {
   });
   const generatedCode = useMemo(() => generateCode(joinState), [joinState]);
   const insertDisabled = joinState.joins.length === 0;
+  const selectedEdge = useMemo(
+    () => graphEdges.find((edge) => edge.id === selectedEdgeId) ?? null,
+    [graphEdges, selectedEdgeId],
+  );
+  const tableNameByNodeId = useMemo(
+    () => new Map(graphNodes.map((node) => [node.id, node.data.table.name])),
+    [graphNodes],
+  );
 
   const handleClearCanvas = useCallback(() => {
-    setClearVersion((current) => current + 1);
+    setGraphNodes([]);
+    setGraphEdges([]);
+    setSelectedEdgeId(null);
   }, []);
 
   const handleCopyCode = useCallback(() => {
@@ -72,18 +96,46 @@ function App() {
   }, [generatedCode, insertDisabled]);
 
   const copyLabel = useMemo(() => (copied ? 'Copied' : 'Copy Code'), [copied]);
-  const handleGraphChange = useCallback((nodes: Node<TableNodeData>[], edges: Edge<JoinEdgeData>[]) => {
-    setGraphNodes(nodes);
-    setGraphEdges(edges);
-  }, []);
 
   const handleRefreshTables = useCallback(() => {
     sendMessage({ command: 'requestTables' });
   }, []);
 
-  const handleJoinCreated = useCallback(() => {
+  const handleJoinCreated = useCallback((edgeId: string) => {
     setPreviewAutoExpandVersion((current) => current + 1);
+    setSelectedEdgeId(edgeId);
   }, []);
+
+  const handleVennJoinTypeChange = useCallback((joinType: JoinType) => {
+    if (!selectedEdgeId) {
+      return;
+    }
+
+    setGraphEdges((currentEdges) =>
+      currentEdges.map((edge) => {
+        if (edge.id !== selectedEdgeId || !edge.data) {
+          return edge;
+        }
+
+        return {
+          ...edge,
+          data: {
+            ...edge.data,
+            joinType,
+          },
+        };
+      }),
+    );
+  }, [selectedEdgeId]);
+
+  const handleRemoveSelectedJoin = useCallback(() => {
+    if (!selectedEdge) {
+      return;
+    }
+
+    setGraphEdges((currentEdges) => currentEdges.filter((edge) => edge.id !== selectedEdge.id));
+    setSelectedEdgeId(null);
+  }, [selectedEdge]);
 
   return (
     <main className="h-screen bg-bg-base text-text-primary flex flex-col">
@@ -102,9 +154,13 @@ function App() {
         <CanvasErrorBoundary>
           <Canvas
             tables={tables}
-            clearVersion={clearVersion}
-            onGraphChange={handleGraphChange}
+            nodes={graphNodes}
+            edges={graphEdges}
+            setNodes={setGraphNodes}
+            setEdges={setGraphEdges}
+            selectedEdgeId={selectedEdgeId}
             onJoinCreated={handleJoinCreated}
+            onEdgeSelected={setSelectedEdgeId}
           />
         </CanvasErrorBoundary>
         <div className="pointer-events-none absolute inset-0 z-20">
@@ -122,6 +178,13 @@ function App() {
               className="rounded border border-border-default bg-bg-overlay px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover"
             >
               {showCodePanel ? 'Hide Code' : 'Show Code'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowVennOverlay((current) => !current)}
+              className="rounded border border-border-default bg-bg-overlay px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover"
+            >
+              {showVennOverlay ? 'Hide Venn' : 'Show Venn'}
             </button>
           </div>
 
@@ -144,6 +207,20 @@ function App() {
                 code={generatedCode}
                 floating
                 onClose={() => setShowCodePanel(false)}
+              />
+            </div>
+          )}
+
+          {showVennOverlay && (
+            <div className="pointer-events-auto absolute bottom-4 right-4 w-[250px] max-w-[calc(100%-2rem)]">
+              <VennOverlay
+                edgeId={selectedEdge?.id ?? null}
+                joinType={selectedEdge?.data?.joinType}
+                leftTableName={selectedEdge ? tableNameByNodeId.get(selectedEdge.source) : undefined}
+                rightTableName={selectedEdge ? tableNameByNodeId.get(selectedEdge.target) : undefined}
+                onJoinTypeChange={handleVennJoinTypeChange}
+                onRemoveJoin={handleRemoveSelectedJoin}
+                onClose={() => setShowVennOverlay(false)}
               />
             </div>
           )}

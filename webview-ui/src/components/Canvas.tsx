@@ -5,14 +5,16 @@ import {
   MiniMap,
   ReactFlow,
   addEdge,
-  useEdgesState,
-  useNodesState,
+  applyEdgeChanges,
+  applyNodeChanges,
   type ReactFlowInstance,
   type Connection,
   type Edge,
+  type EdgeChange,
   type Node,
+  type NodeChange,
 } from '@xyflow/react';
-import { useCallback, useEffect, useMemo, useRef, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, type Dispatch, type DragEvent, type MouseEvent as ReactMouseEvent, type SetStateAction } from 'react';
 import type { JoinType, TableSchema } from '../../../src/types/joinState';
 import { JoinEdge } from './JoinEdge';
 import { TABLE_COLOR_CLASSES, TABLE_DRAG_MIME, type JoinEdgeData, type TableNodeData } from './graphTypes';
@@ -21,9 +23,13 @@ import '@xyflow/react/dist/style.css';
 
 interface CanvasProps {
   tables: TableSchema[];
-  clearVersion: number;
-  onGraphChange: (nodes: Node<TableNodeData>[], edges: Edge<JoinEdgeData>[]) => void;
-  onJoinCreated?: () => void;
+  nodes: Node<TableNodeData>[];
+  edges: Edge<JoinEdgeData>[];
+  setNodes: Dispatch<SetStateAction<Node<TableNodeData>[]>>;
+  setEdges: Dispatch<SetStateAction<Edge<JoinEdgeData>[]>>;
+  selectedEdgeId?: string | null;
+  onJoinCreated?: (edgeId: string) => void;
+  onEdgeSelected?: (edgeId: string | null) => void;
 }
 
 const nodeTypes = {
@@ -34,11 +40,32 @@ const edgeTypes = {
   joinEdge: JoinEdge,
 };
 
-export function Canvas({ tables, clearVersion, onGraphChange, onJoinCreated }: CanvasProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<TableNodeData>>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<JoinEdgeData>>([]);
+export function Canvas({
+  tables,
+  nodes,
+  edges,
+  setNodes,
+  setEdges,
+  selectedEdgeId,
+  onJoinCreated,
+  onEdgeSelected,
+}: CanvasProps) {
   const joinTypeChangeRef = useRef<(edgeId: string, joinType: JoinType) => void>(() => undefined);
   const reactFlowRef = useRef<ReactFlowInstance<Node<TableNodeData>, Edge<JoinEdgeData>> | null>(null);
+
+  const onNodesChange = useCallback((changes: NodeChange<Node<TableNodeData>>[]) => {
+    setNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
+  }, [setNodes]);
+
+  const onEdgesChange = useCallback((changes: EdgeChange<Edge<JoinEdgeData>>[]) => {
+    setEdges((currentEdges) => {
+      const nextEdges = applyEdgeChanges(changes, currentEdges);
+      if (selectedEdgeId && !nextEdges.some((edge) => edge.id === selectedEdgeId)) {
+        onEdgeSelected?.(null);
+      }
+      return nextEdges;
+    });
+  }, [onEdgeSelected, selectedEdgeId, setEdges]);
 
   const onToggleColumn = useCallback((nodeId: string, columnName: string, checked: boolean) => {
     setNodes((currentNodes) =>
@@ -85,10 +112,14 @@ export function Canvas({ tables, clearVersion, onGraphChange, onJoinCreated }: C
 
   const onDeleteNode = useCallback((nodeId: string) => {
     setNodes((currentNodes) => currentNodes.filter((node) => node.id !== nodeId));
-    setEdges((currentEdges) =>
-      currentEdges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
-    );
-  }, [setEdges, setNodes]);
+    setEdges((currentEdges) => {
+      const nextEdges = currentEdges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId);
+      if (selectedEdgeId && !nextEdges.some((edge) => edge.id === selectedEdgeId)) {
+        onEdgeSelected?.(null);
+      }
+      return nextEdges;
+    });
+  }, [onEdgeSelected, selectedEdgeId, setEdges, setNodes]);
 
   const onJoinTypeChange = useCallback((edgeId: string, joinType: JoinType) => {
     setEdges((currentEdges) =>
@@ -114,19 +145,21 @@ export function Canvas({ tables, clearVersion, onGraphChange, onJoinCreated }: C
   }, [onJoinTypeChange]);
 
   const onConnect = useCallback((connection: Connection) => {
+    const edgeId = `join-${Date.now()}`;
     setEdges((currentEdges) =>
       addEdge<Edge<JoinEdgeData>>(
         {
           ...connection,
-          id: `join-${Date.now()}`,
+          id: edgeId,
           type: 'joinEdge',
           data: { joinType: 'inner', onJoinTypeChange, isNew: true },
         },
         currentEdges,
       ),
     );
-    onJoinCreated?.();
-  }, [onJoinCreated, onJoinTypeChange, setEdges]);
+    onJoinCreated?.(edgeId);
+    onEdgeSelected?.(edgeId);
+  }, [onEdgeSelected, onJoinCreated, onJoinTypeChange, setEdges]);
 
   const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -168,9 +201,13 @@ export function Canvas({ tables, clearVersion, onGraphChange, onJoinCreated }: C
     });
   }, [onDeleteNode, onSelectAll, onToggleColumn, setNodes, tables]);
 
-  useEffect(() => {
-    onGraphChange(nodes, edges);
-  }, [edges, nodes, onGraphChange]);
+  const onEdgeClick = useCallback((_event: ReactMouseEvent, edge: Edge<JoinEdgeData>) => {
+    onEdgeSelected?.(edge.id);
+  }, [onEdgeSelected]);
+
+  const onPaneClick = useCallback(() => {
+    onEdgeSelected?.(null);
+  }, [onEdgeSelected]);
 
   useEffect(() => {
     if (nodes.length === 0) {
@@ -186,11 +223,6 @@ export function Canvas({ tables, clearVersion, onGraphChange, onJoinCreated }: C
     };
   }, [nodes.length]);
 
-  useEffect(() => {
-    setNodes([]);
-    setEdges([]);
-  }, [clearVersion, setEdges, setNodes]);
-
   const minimapNodeStrokeColor = useMemo(() => 'var(--color-border-focus)', []);
 
   return (
@@ -204,6 +236,8 @@ export function Canvas({ tables, clearVersion, onGraphChange, onJoinCreated }: C
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onEdgeClick={onEdgeClick}
+        onPaneClick={onPaneClick}
         elementsSelectable={true}
         fitView
         onInit={(instance) => {
