@@ -43,11 +43,15 @@ export class TableDiscovery {
 	}
 
 	private async poll(force = false): Promise<void> {
-		const [tables, kernelStatus] = await Promise.all([
+		const [discoveredTables, kernelStatus] = await Promise.all([
 			JupyterKernel.discoverTables(),
 			JupyterKernel.getKernelStatus()
 		]);
+		if (discoveredTables === null) {
+			return;
+		}
 
+		const tables = discoveredTables;
 		const tableFingerprint = JSON.stringify(tables);
 		const kernelFingerprint = JSON.stringify(kernelStatus);
 		const changed =
