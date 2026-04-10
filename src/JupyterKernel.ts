@@ -82,66 +82,52 @@ export class JupyterKernel {
 	}
 
 	public static async executePreview(code: string): Promise<PreviewExecutionResult> {
-		try {
-			if (!code.trim()) {
-				return {
-					html: '',
-					rowCount: 0,
-					errorMessage: 'Add at least one join before previewing results.'
-				};
-			}
-
-			const kernel = await this.getActiveKernel();
-			if (!kernel) {
-				return {
-					html: '',
-					rowCount: 0,
-					errorMessage: 'No active Jupyter kernel. Start a notebook kernel and run a cell first.'
-				};
-			}
-
-			const outputVariable = this.inferOutputVariable(code);
-			if (!outputVariable) {
-				return {
-					html: '',
-					rowCount: 0,
-					errorMessage: 'Could not determine the output DataFrame for preview.'
-				};
-			}
-
-			const previewScript = [
-				'import json',
-				code,
-				`__vjb_preview_source = ${outputVariable}`,
-				"if not hasattr(__vjb_preview_source, 'to_html') and hasattr(__vjb_preview_source, 'toPandas'):",
-				'    __vjb_preview_source = __vjb_preview_source.toPandas()',
-				'__vjb_preview_html = __vjb_preview_source.head(5).to_html(index=False)',
-				'__vjb_preview_count = int(len(__vjb_preview_source))',
-				`print('${PREVIEW_RESULT_MARKER}' + json.dumps({'html': __vjb_preview_html, 'rowCount': __vjb_preview_count}))`
-			].join('\n');
-
-			const rawOutput = await this.runSilently(kernel, previewScript);
-			const payload = this.extractPreviewPayload(rawOutput);
-			if (!payload) {
-				return {
-					html: '',
-					rowCount: 0,
-					errorMessage: 'Preview execution completed, but no HTML output was returned.'
-				};
-			}
-
-			return {
-				html: payload.html,
-				rowCount: payload.rowCount
-			};
-		} catch (error) {
-			console.error('Failed to execute preview in active kernel:', error);
+		if (!code.trim()) {
 			return {
 				html: '',
-				rowCount: 0,
-				errorMessage: 'Preview execution failed in the active kernel.'
+				rowCount: 0
 			};
 		}
+
+		const editor = vscode.window.activeNotebookEditor ?? vscode.window.visibleNotebookEditors[0];
+		if (!editor) {
+			return {
+				html: '',
+				rowCount: 0
+			};
+		}
+
+		const kernel = await this.getKernelForUri(editor.notebook.uri);
+		if (!kernel) {
+			throw new Error('No active Jupyter kernel found for the visible notebook.');
+		}
+
+		const outputVariable = this.inferOutputVariable(code);
+		if (!outputVariable) {
+			throw new Error('Could not determine the output DataFrame for preview.');
+		}
+
+		const previewScript = [
+			'import json',
+			code,
+			`__vjb_preview_source = ${outputVariable}`,
+			"if not hasattr(__vjb_preview_source, 'to_html') and hasattr(__vjb_preview_source, 'toPandas'):",
+			'    __vjb_preview_source = __vjb_preview_source.toPandas()',
+			'__vjb_preview_html = __vjb_preview_source.head(5).to_html(index=False)',
+			'__vjb_preview_count = int(len(__vjb_preview_source))',
+			`print('${PREVIEW_RESULT_MARKER}' + json.dumps({'html': __vjb_preview_html, 'rowCount': __vjb_preview_count}))`
+		].join('\n');
+
+		const rawOutput = await this.runSilently(kernel, previewScript);
+		const payload = this.extractPreviewPayload(rawOutput);
+		if (!payload) {
+			throw new Error('Preview execution completed, but no HTML output was returned.');
+		}
+
+		return {
+			html: payload.html,
+			rowCount: payload.rowCount
+		};
 	}
 
 	public static async getKernelStatus(): Promise<KernelStatusSnapshot> {

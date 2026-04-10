@@ -79,19 +79,21 @@ export class WebviewManager {
 
 			if (message.command === 'requestPreview') {
 				const code = generateCode(message.payload.joinState);
-				const result = await JupyterKernel.executePreview(code);
-				if (result.errorMessage) {
+				try {
+					const result = await JupyterKernel.executePreview(code);
+					this.postMessage({
+						command: 'previewResult',
+						payload: { html: result.html, rowCount: result.rowCount }
+					});
+				} catch (error) {
+					const previewMessage =
+						error instanceof Error ? error.message : 'Preview execution failed in the active kernel.';
 					this.postMessage({
 						command: 'previewError',
-						payload: { message: result.errorMessage }
+						payload: { message: previewMessage }
 					});
-					return;
 				}
-
-				this.postMessage({
-					command: 'previewResult',
-					payload: { html: result.html, rowCount: result.rowCount }
-				});
+				return;
 			}
 		});
 
