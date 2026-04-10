@@ -28,7 +28,7 @@ export function TableNode({ id, data, selected }: NodeProps<Node<TableNodeData>>
 
   return (
     <div
-      className={`w-[220px] rounded-lg border bg-bg-elevated ${selected ? 'border-border-focus ring-2 ring-accent-dim' : 'border-border-default'}`}
+      className={`w-[200px] rounded-lg border bg-bg-elevated ${selected ? 'border-border-focus ring-2 ring-accent-dim' : 'border-border-default'}`}
     >
       <div className="flex items-center justify-between border-b border-border-subtle px-3 py-2">
         <div className="flex items-center gap-2">

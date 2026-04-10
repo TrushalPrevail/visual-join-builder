@@ -15,7 +15,7 @@ function VennIcon({ joinType, active }: { joinType: JoinType; active: boolean })
   const rightClipId = `${uniqueId}-right`;
 
   return (
-    <svg viewBox="0 0 36 32" className={`h-10 w-10 ${active ? 'opacity-100' : 'opacity-75'}`} aria-hidden="true">
+    <svg viewBox="0 0 36 32" className={`h-8 w-8 ${active ? 'opacity-100' : 'opacity-75'}`} aria-hidden="true">
       <defs>
         <clipPath id={leftClipId}>
           <circle cx="14" cy="16" r="8" />
@@ -88,9 +88,9 @@ export function JoinTypePopover({ currentType, onSelect, onClose, style }: JoinT
     <div
       ref={popoverRef}
       style={style}
-      className="absolute z-20 w-[280px] rounded-lg border border-border-default bg-bg-overlay p-3 shadow-lg"
+      className="absolute z-20 w-[236px] rounded-lg border border-border-default bg-bg-overlay p-2 shadow-lg"
     >
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1.5">
         {JOIN_TYPE_OPTIONS.map((joinType) => {
           const active = currentType === joinType;
           const colorClass = getJoinTypeColorClass(joinType);
@@ -99,7 +99,7 @@ export function JoinTypePopover({ currentType, onSelect, onClose, style }: JoinT
               key={joinType}
               type="button"
               onClick={() => onSelect(joinType)}
-              className={`flex flex-col items-center rounded-md border px-2 py-2 text-[11px] font-mono ${active ? 'border-border-focus bg-accent-dim' : 'border-border-subtle bg-bg-elevated hover:bg-bg-hover'} ${colorClass}`}
+              className={`flex flex-col items-center rounded-md border px-1.5 py-1.5 text-[10px] font-mono ${active ? 'border-border-focus bg-accent-dim' : 'border-border-subtle bg-bg-elevated hover:bg-bg-hover'} ${colorClass}`}
             >
               <VennIcon joinType={joinType} active={active} />
               <span>{getJoinTypeLabel(joinType)}</span>

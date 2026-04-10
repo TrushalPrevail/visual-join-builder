@@ -83,9 +83,9 @@ export function JoinEdge({
               }}
               onClose={() => setOpen(false)}
               style={{
-                left: 0,
-                top: 'calc(100% + 8px)',
-                transform: 'translateX(-40%)',
+                left: '50%',
+                top: 'calc(100% + 6px)',
+                transform: 'translateX(-50%)',
               }}
             />
           )}

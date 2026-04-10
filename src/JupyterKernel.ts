@@ -337,7 +337,7 @@ export class JupyterKernel {
 		const assignmentPattern = /^([A-Za-z_][A-Za-z0-9_]*)\s*=/u;
 
 		for (const line of code.split(/\r?\n/u)) {
-			const match = assignmentPattern.exec(line.trim());
+			const match = assignmentPattern.exec(line);
 			if (match) {
 				candidate = match[1];
 			}

@@ -91,22 +91,24 @@ function App() {
         insertDisabled={insertDisabled}
         copyLabel={copyLabel}
       />
-      <div className="flex min-h-0 flex-1">
-        <div className="w-[220px] flex-shrink-0 [&>aside]:!w-full">
-          <Sidebar
-            tables={tables}
-            kernelActive={kernelActive}
-            kernelName={kernelName}
-            onRefresh={handleRefreshTables}
-          />
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        <CanvasErrorBoundary>
+          <Canvas tables={tables} clearVersion={clearVersion} onGraphChange={handleGraphChange} />
+        </CanvasErrorBoundary>
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[220px]">
+          <div className="pointer-events-auto h-full [&>aside]:!h-full [&>aside]:!w-full">
+            <Sidebar
+              tables={tables}
+              kernelActive={kernelActive}
+              kernelName={kernelName}
+              onRefresh={handleRefreshTables}
+            />
+          </div>
         </div>
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <CanvasErrorBoundary>
-            <Canvas tables={tables} clearVersion={clearVersion} onGraphChange={handleGraphChange} />
-          </CanvasErrorBoundary>
-        </div>
-        <div className="w-[300px] flex-shrink-0 [&>aside]:!w-full">
-          <CodePanel code={generatedCode} />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-[300px]">
+          <div className="pointer-events-auto h-full [&>aside]:!h-full [&>aside]:!w-full">
+            <CodePanel code={generatedCode} />
+          </div>
         </div>
       </div>
       <PreviewPanel joinState={joinState} disabled={insertDisabled} />
