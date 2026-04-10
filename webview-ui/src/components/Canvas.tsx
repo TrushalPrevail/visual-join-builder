@@ -21,7 +21,7 @@ import '@xyflow/react/dist/style.css';
 interface CanvasProps {
   tables: TableSchema[];
   clearVersion: number;
-  onJoinCountChange: (count: number) => void;
+  onGraphChange: (nodes: Node<TableNodeData>[], edges: Edge<JoinEdgeData>[]) => void;
 }
 
 const nodeTypes = {
@@ -32,7 +32,7 @@ const edgeTypes = {
   joinEdge: JoinEdge,
 };
 
-export function Canvas({ tables, clearVersion, onJoinCountChange }: CanvasProps) {
+export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<TableNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<JoinEdgeData>>([]);
   const joinTypeChangeRef = useRef<(edgeId: string, joinType: JoinType) => void>(() => undefined);
@@ -160,8 +160,8 @@ export function Canvas({ tables, clearVersion, onJoinCountChange }: CanvasProps)
   }, [onSelectAll, onToggleColumn, setNodes, tables]);
 
   useEffect(() => {
-    onJoinCountChange(edges.length);
-  }, [edges.length, onJoinCountChange]);
+    onGraphChange(nodes, edges);
+  }, [edges, nodes, onGraphChange]);
 
   useEffect(() => {
     setNodes([]);
