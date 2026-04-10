@@ -47,13 +47,18 @@ export interface PreviewExecutionResult {
 export class JupyterKernel {
 	public static async discoverTables(): Promise<TableSchema[] | null> {
 		try {
-			const editor = vscode.window.activeNotebookEditor ?? vscode.window.visibleNotebookEditors[0];
+			const activeEditor = vscode.window.activeNotebookEditor;
+			const visibleEditor = vscode.window.visibleNotebookEditors[0];
+			const editor = activeEditor ?? visibleEditor;
 			if (!editor) {
 				return null;
 			}
 
 			const kernel = await this.getKernelForUri(editor.notebook.uri);
 			if (!kernel) {
+				if (!activeEditor) {
+					return null;
+				}
 				return [];
 			}
 
@@ -132,7 +137,12 @@ export class JupyterKernel {
 
 	public static async getKernelStatus(): Promise<KernelStatusSnapshot> {
 		try {
-			const kernel = await this.getActiveKernel();
+			const editor = this.getPreferredNotebookEditor();
+			if (!editor) {
+				return { active: false };
+			}
+
+			const kernel = await this.getKernelForUri(editor.notebook.uri);
 			if (!kernel) {
 				return { active: false };
 			}
@@ -148,7 +158,7 @@ export class JupyterKernel {
 	}
 
 	private static async getActiveKernel(): Promise<JupyterKernelApi | undefined> {
-		const notebookUri = vscode.window.activeNotebookEditor?.notebook.uri;
+		const notebookUri = this.getPreferredNotebookEditor()?.notebook.uri;
 		if (!notebookUri) {
 			return undefined;
 		}
@@ -168,6 +178,10 @@ export class JupyterKernel {
 		}
 
 		return activated.kernels.getKernel(notebookUri);
+	}
+
+	private static getPreferredNotebookEditor(): vscode.NotebookEditor | undefined {
+		return vscode.window.activeNotebookEditor ?? vscode.window.visibleNotebookEditors[0];
 	}
 
 	private static isJupyterApi(value: unknown): value is JupyterApi {
