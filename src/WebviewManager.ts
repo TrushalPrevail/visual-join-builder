@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import type { HostToWebviewMessage } from './types/messages';
+import { WebviewMessageZ } from './types/schemas';
 
 export class WebviewManager {
 	private static instance: WebviewManager | undefined;
@@ -37,7 +39,32 @@ export class WebviewManager {
 			this.panel = undefined;
 		});
 
+		this.panel.webview.onDidReceiveMessage((raw: unknown) => {
+			const result = WebviewMessageZ.safeParse(raw);
+			if (!result.success) {
+				console.error('Invalid message from Webview:', result.error);
+				return;
+			}
+
+			const message = result.data;
+			if (message.command === 'ready') {
+				this.postMessage({
+					command: 'kernelStatus',
+					payload: { active: false }
+				});
+				return;
+			}
+
+			if (message.command === 'insertCode') {
+				void vscode.window.showInformationMessage(message.payload.code);
+			}
+		});
+
 		this.panel.webview.html = this.getWebviewHtml(this.panel.webview);
+	}
+
+	private postMessage(message: HostToWebviewMessage): void {
+		void this.panel?.webview.postMessage(message);
 	}
 
 	private getWebviewHtml(webview: vscode.Webview): string {
@@ -60,7 +87,7 @@ export class WebviewManager {
 </head>
 <body>
 	<div id="root"></div>
-	<script nonce="${nonce}" src="${scriptUri}"></script>
+	<script nonce="${nonce}" type="module" src="${scriptUri}"></script>
 </body>
 </html>`;
 	}
