@@ -56,3 +56,4 @@ The extension adds a `✨ Visual Join` CodeLens in notebook/Python files when Pa
 ## License
 
 See repository license and metadata files for distribution details.
+
