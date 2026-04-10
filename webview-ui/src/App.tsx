@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { generateCode } from '../../src/CodeGenerator';
 import type { Dialect, TableSchema } from '../../src/types/joinState';
 import { Canvas } from './components/Canvas';
+import { CanvasErrorBoundary } from './components/CanvasErrorBoundary';
 import { CodePanel } from './components/CodePanel';
 import { PreviewPanel } from './components/PreviewPanel';
 import { Sidebar } from './components/Sidebar';
@@ -97,7 +98,9 @@ function App() {
           kernelName={kernelName}
           onRefresh={handleRefreshTables}
         />
-        <Canvas tables={tables} clearVersion={clearVersion} onGraphChange={handleGraphChange} />
+        <CanvasErrorBoundary>
+          <Canvas tables={tables} clearVersion={clearVersion} onGraphChange={handleGraphChange} />
+        </CanvasErrorBoundary>
         <CodePanel code={generatedCode} />
       </div>
       <PreviewPanel joinState={joinState} disabled={insertDisabled} />
