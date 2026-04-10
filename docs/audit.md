@@ -7,7 +7,7 @@
 
 ## 🔴 CRITICAL ISSUE 1 — `reactflow` is Abandoned. Use `@xyflow/react`
 
-**Affected docs:** PHASES.md, RULES.md, ARCHITECTURE.md, UI_DESIGN.md
+**Affected docs:** phases.md, rules.md, architecture.md, ui_design.md
 
 **Finding:**
 `reactflow` v11.11.4 was last published 2 years ago. The package was rebranded from `reactflow` to `@xyflow/react` to unify the project under the "xyflow" umbrella.
@@ -26,13 +26,13 @@
 
 **The default export is gone.** `ReactFlow` is now a named export. Any AI that writes `import ReactFlow from '@xyflow/react'` will get a TypeScript error.
 
-**Fix:** See RULES.md Rule 12 and all updated Phase prompts.
+**Fix:** See rules.md Rule 12 and all updated Phase prompts.
 
 ---
 
 ## 🔴 CRITICAL ISSUE 2 — `vsce` Package Renamed. Use `@vscode/vsce`
 
-**Affected docs:** PHASES.md (Phase 7), LAUNCH_CHECKLIST.md
+**Affected docs:** `phases.md` (Phase 7), `checklist.md`
 
 **Finding:**
 The `vsce` npm package now shows author message: "vsce has been renamed to `@vscode/vsce`. Install using `@vscode/vsce` instead."
@@ -41,21 +41,21 @@ The correct package is `@vscode/vsce`, latest version 3.7.1, requiring Node.js a
 
 **Impact:** Running `npx vsce package` may install the old abandoned package or do nothing. Any script referencing `vsce` will fail or use a years-old version.
 
-**Correct scripts in package.json:**
+**Recommended scripts in package.json:**
 ```json
 "scripts": {
-  "package": "npx @vscode/vsce package --no-dependencies",
-  "publish": "npx @vscode/vsce publish --no-dependencies"
+  "vsce:package": "npx @vscode/vsce package --no-dependencies",
+  "vsce:publish": "npx @vscode/vsce publish --no-dependencies"
 }
 ```
 
-The `--no-dependencies` flag is mandatory because our extension uses esbuild bundling — all dependencies are already bundled into the output file. Without this flag, vsce tries to bundle `node_modules` and will error or bloat the `.vsix`.
+The `--no-dependencies` flag is mandatory because our extension uses esbuild bundling — all dependencies are already bundled into the output file. Without this flag, vsce tries to bundle `node_modules` and will error or bloat the `.vsix`. Keep scaffold build scripts (`package`, `vscode:prepublish`) dedicated to compile/bundle steps.
 
 ---
 
 ## 🔴 CRITICAL ISSUE 3 — `acquireVsCodeApi` Types: Wrong Package Import Pattern
 
-**Affected docs:** PHASES.md Phase 2 (vscodeApi.ts), API_CONTRACTS.md
+**Affected docs:** phases.md Phase 2 (vscodeApi.ts), api_contracts.md
 
 **Finding:**
 `@types/vscode-webview` declares `acquireVsCodeApi` as a global function and exports the `WebviewApi` interface.
@@ -108,7 +108,7 @@ export function getVSCodeApi() {
 
 ## 🟡 ISSUE 4 — DuckDB API: Use `duckdb.sql()` not `duckdb.query()`
 
-**Affected docs:** CODEGEN_SPEC.md (Case 7)
+**Affected docs:** codegen_spec.md (Case 7)
 
 **Finding:**
 The DuckDB Python docs state: "The most straight-forward manner of running SQL queries using DuckDB is using the `duckdb.sql` command."
@@ -123,13 +123,13 @@ import duckdb
 result_df = duckdb.sql("SELECT * FROM df_users LEFT JOIN df_orders ON ...").df()
 ```
 
-**Fix:** Replace all `duckdb.query()` with `duckdb.sql()` in CODEGEN_SPEC.md.
+**Fix:** Replace all `duckdb.query()` with `duckdb.sql()` in codegen_spec.md.
 
 ---
 
 ## 🟡 ISSUE 5 — `esbuild` Already Installed by `yo code` Scaffold
 
-**Affected docs:** PHASES.md Phase 0
+**Affected docs:** phases.md Phase 0
 
 **Finding:** The `yo code` scaffold with esbuild bundler already adds `esbuild` to `devDependencies` in `package.json` and generates an `esbuild.js` build script. Running `npm install -D esbuild` again is harmless but redundant and confusing.
 

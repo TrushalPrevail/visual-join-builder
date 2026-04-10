@@ -1,6 +1,6 @@
-# LAUNCH_CHECKLIST.md — Pre-Publish Verification
+# checklist.md — Pre-Publish Verification
 
-Complete every item before running `vsce publish`. Check off each one manually.
+Complete every item before running `npx @vscode/vsce publish --no-dependencies`. Check off each one manually.
 
 ---
 
@@ -17,11 +17,11 @@ Complete every item before running `vsce publish`. Check off each one manually.
 
 ## 🔒 Security
 
-- [ ] Every Webview render call includes a fresh `nonce` (see RULES.md Rule 4)
+- [ ] Every Webview render call includes a fresh `nonce` (see rules.md Rule 4)
 - [ ] CSP meta tag is present in every HTML string returned by `WebviewManager`
 - [ ] No hardcoded secrets, API keys, or user data in any file
-- [ ] All Webview `localResourceRoots` restricted to `[extensionUri]` only
-- [ ] `enableScripts: true` is the only non-default Webview option set
+- [ ] All Webview `localResourceRoots` restricted to `[vscode.Uri.joinPath(extensionUri, 'webview-ui', 'build')]`
+- [ ] `enableScripts: true` and strict `localResourceRoots` are the only non-default Webview options set
 
 ---
 
@@ -113,14 +113,14 @@ npm run prebuild   # builds webview-ui
 npm run compile    # builds extension host
 
 # 3. Package
-npx vsce package
+npx @vscode/vsce package --no-dependencies
 
 # 4. Inspect the .vsix
-npx vsce ls  # verify file list
+npx @vscode/vsce ls  # verify file list
 
 # 5. Install locally for one last test
 code --install-extension visual-join-builder-*.vsix
 
 # 6. Publish (requires vsce login first)
-npx vsce publish
+npx @vscode/vsce publish --no-dependencies
 ```

@@ -83,12 +83,15 @@ visual-join-builder/
 ├── tsconfig.json
 ├── .vscodeignore
 └── docs/
-    ├── ARCHITECTURE.md           # This file
-    ├── RULES.md                  # Hard constraints for AI agent
-    ├── PHASES.md                 # Step-by-step build plan
-    ├── UI_DESIGN.md              # Visual design specification
-    ├── API_CONTRACTS.md          # Message passing contracts
-    └── CODEGEN_SPEC.md           # Code generation engine spec
+    ├── architecture.md           # This file
+    ├── rules.md                  # Hard constraints for AI agent
+    ├── phases.md                 # Step-by-step build plan
+    ├── ui_design.md              # Visual design specification
+    ├── api_contracts.md          # Message passing contracts
+    ├── codegen_spec.md           # Code generation engine spec
+    ├── checklist.md              # Pre-publish verification
+    ├── audit.md                  # Dependency and API audit
+    └── Extension Prompts         # Phase execution prompts
 ```
 
 ---

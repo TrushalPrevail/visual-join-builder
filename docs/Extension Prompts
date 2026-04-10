@@ -1,0 +1,180 @@
+Read `docs/rules.md` (specifically Rules 1, 3, 4, and 5) and `docs/architecture.md` before writing code.
+Do not implement anything beyond Phase 1.
+
+Task: Implement Phase 1 — Extension Skeleton & Webview Loader.
+
+1. **Extension Entry (`src/extension.ts`)**:
+   - Register the command `visual-join-builder.open` to call a new `WebviewManager.render()` method.
+   - Register `visual-join-builder.openFromCell` to do the same thing for now.
+
+2. **Webview Manager (`src/WebviewManager.ts`)**:
+   - Create a singleton class that manages a `vscode.WebviewPanel`. Use `viewColumn: vscode.ViewColumn.Beside`.
+   - **CRITICAL (Rule 3 & 4):** Set `enableScripts: true` and strictly limit `localResourceRoots` to `[vscode.Uri.joinPath(extensionUri, 'webview-ui', 'build')]`.
+   - Inject this EXACT Content-Security-Policy meta tag into the HTML (generate a random 32-char alphanumeric nonce per render):
+     `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} data:; font-src ${webview.cspSource};">`
+   - Use `webview.asWebviewUri` to link to `webview-ui/build/assets/index.js` and `webview-ui/build/assets/index.css`.
+
+3. **Vite Config (`webview-ui/vite.config.ts`)**:
+   - **CRITICAL (Rule 5):** Configure Rollup to output exact filenames with NO HASHES so the Extension Host can find them:
+     `build: { outDir: 'build', rollupOptions: { output: { entryFileNames: 'assets/index.js', assetFileNames: 'assets/[name].[ext]' } } }`
+
+4. **React Root (`webview-ui/src/main.tsx` & `App.tsx`)**:
+   - Render a basic `<App />` component.
+   - Apply a dark background (`var(--color-bg-base)` from our Tailwind v4 theme) and white text showing an `<h1>Visual Join Builder</h1>`.
+   - Do NOT build the canvas or ReactFlow yet. Just prove the Webview loads securely.
+
+
+
+
+   Read `docs/api_contracts.md` and `docs/rules.md` (specifically Rules 6 and 14).
+Do not implement the canvas yet.
+
+Task: Implement Phase 2 — Typed IPC Communication.
+
+1. **Types (`src/types/joinState.ts` & `src/types/messages.ts`)**:
+   - Replicate the exact TypeScript interfaces for `JoinState`, `TableSchema`, `ColumnSchema`, `JoinClause`, and `SelectedColumn` found in `docs/api_contracts.md`.
+   - Replicate the exact `WebviewToHostMessage` and `HostToWebviewMessage` discriminated unions.
+
+2. **Zod Validation (`src/types/schemas.ts`)**:
+   - Create Zod schemas for all types.
+   - **CRITICAL FIX:** For `JoinStateZ`, make sure `outputName` has a fallback: `outputName: z.string().optional().default('result_df')`.
+   - Create `WebviewMessageZ` to validate incoming messages from the UI.
+
+3. **Update `src/WebviewManager.ts`**:
+   - Add `webview.onDidReceiveMessage` listener. Parse raw messages using `WebviewMessageZ.safeParse()`.
+   - If `msg.command === 'ready'`, post back a `kernelStatus` message with `active: false` (mocking for now).
+   - If `msg.command === 'insertCode'`, just show a `vscode.window.showInformationMessage(msg.payload.code)` for now.
+
+4. **React VS Code API Wrapper (`webview-ui/src/lib/vscodeApi.ts`)**:
+   - **CRITICAL (Rule 14):** Do NOT `import { WebviewApi } from 'vscode-webview';`. The package `@types/vscode-webview` makes `acquireVsCodeApi` a global.
+   - Create a singleton: `let api: ReturnType<typeof acquireVsCodeApi> | undefined; export function getVSCodeApi() { if (!api) api = acquireVsCodeApi(); return api; }`
+   - Export `persistState(state)` and `getPersistedState()` using `getState()` and `setState()`.
+
+5. **React Hook (`webview-ui/src/hooks/useVSCodeMessage.ts`)**:
+   - Create `useVSCodeMessage(handler)` that manages `window.addEventListener('message', ...)`.
+   - Export a `sendMessage` function wrapping `getVSCodeApi().postMessage()`.
+   - In `App.tsx`, send `{ command: 'ready' }` on mount and listen for `kernelStatus` to display a basic status badge.
+
+
+
+   Read `docs/ui_design.md` and `docs/rules.md` (specifically Rules 11 and 12).
+Do not generate code logic yet.
+
+Task: Implement Phase 3 — The Canvas UI.
+
+1. **Strict Dependency Rules**:
+   - You MUST use `@xyflow/react` via named exports. Do not use `reactflow`.
+   - Node dimensions use `node.measured?.width`, not `node.width`.
+   - Use Tailwind v4 utility classes based on the CSS variables defined in `index.css` (e.g., `bg-bg-surface`, `text-accent`, `border-border-subtle`). Do NOT use inline hex codes.
+
+2. **Components to Build**:
+   - `Sidebar.tsx`: List draggable mock tables. Show a "Manual Mode" warning.
+   - `TableNode.tsx`: A custom `@xyflow/react` node. Header with table name. Rows for columns showing checkboxes, dtypes, and `<Handle type="source" position={Position.Right} />` / `<Handle type="target" position={Position.Left} />`.
+   - `JoinEdge.tsx`: A custom edge with a clickable pill badge in the center that opens `JoinTypePopover.tsx`.
+   - `JoinTypePopover.tsx`: A floating card showing 5 Venn diagrams for join types (INNER, LEFT, RIGHT, OUTER, CROSS).
+   - `Toolbar.tsx`: Input for output name, segmented control for dialect (Pandas/DuckDB/PySpark), and an "Insert to Notebook" button.
+
+3. **ReactFlow Wrapper (`Canvas.tsx`)**:
+   - Use `useNodesState` and `useEdgesState`. Handle `onDrop` to spawn `TableNode`s. Handle `onConnect` to spawn `JoinEdge`s (default 'inner').
+   - **CRITICAL FIX:** Use the correct v12 Background props: `<Background variant={BackgroundVariant.Dots} gap={[20, 20]} size={1.5} color="var(--color-border-subtle)" />`
+
+4. **Mock Data**:
+   - Inject the mock `df_users` and `df_orders` tables specified in `docs/phases.md` Phase 3 into the sidebar state so we can test dragging.
+
+
+
+
+   Read `docs/codegen_spec.md` and `docs/rules.md` (specifically Rules 9 and 10).
+This phase is purely TypeScript. No UI changes.
+
+Task: Implement Phase 4 — Code Generation Engine.
+
+1. **Engine Rules (`src/CodeGenerator.ts`)**:
+   - **CRITICAL (Rule 9):** ZERO `vscode` imports in this file. It is a pure function: `(state: JoinState) => string`.
+   - Create the router `generateCode(state)` which delegates to `PandasGenerator`, `DuckDBGenerator`, or `PySparkGenerator`.
+
+2. **Implementation Details (Must match CODEGEN_SPEC.md exactly)**:
+   - **Pandas:** Resolve chained joins topologically (A->B->C). Detect column name collisions and apply explicit `suffixes=('_users', '_orders')` as defined in `docs/codegen_spec.md`. Generate `# WARNING:` comments if types mismatch.
+   - **DuckDB:** Generate a raw SQL string passed to DuckDB. **CRITICAL:** Use `duckdb.sql(query).df()`. Do NOT use `.query()`. Do not register DataFrames (DuckDB reads python locals automatically).
+   - **PySpark:** Use chained `.join()` and `.select()` calls.
+
+3. **Tests (`src/__tests__/CodeGenerator.test.ts`)**:
+   - Write Jest tests covering ALL 9 cases outlined in `CODEGEN_SPEC.md`. Do not skip any.
+
+4. **UI Wiring (`webview-ui/src/components/CodePanel.tsx`)**:
+   - Create a custom hook `useJoinState()` that derives the canonical `JoinState` from ReactFlow nodes/edges/toolbar.
+   - Pass this state to `generateCode(joinState)` in `App.tsx` and render the resulting string in `<CodePanel />`.
+   - Add lightweight regex-based syntax highlighting to the code block using Tailwind v4 color tokens.
+
+
+
+   Read `docs/rules.md` (specifically Rule 7). Do NOT invent API methods.
+
+Task: Implement Phase 5 — Code Insertion.
+
+1. **Notebook Inserter (`src/NotebookInserter.ts`)**:
+   - Create `insertCode(code: string): Promise<void>`.
+   - Check `vscode.window.activeNotebookEditor`. If it exists:
+     - **CRITICAL (Rule 7):** Use `vscode.WorkspaceEdit`. Get `activeNotebookEditor.notebook.uri` and `activeNotebookEditor.selections[0].end`.
+     - Apply `vscode.NotebookEdit.insertCells(position, [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, code, 'python')])`.
+   - If no notebook is active, check `vscode.window.activeTextEditor`. If it exists, use `textEditor.edit(builder => builder.insert(textEditor.selection.active, code))`.
+   - If neither exists, `vscode.window.showWarningMessage('Open a notebook or Python file first.')`.
+
+2. **Update `src/WebviewManager.ts`**:
+   - Update the `insertCode` message handler to await `NotebookInserter.insertCode(msg.payload.code)`.
+
+3. **CodeLens Provider (`src/extension.ts`)**:
+   - Register a `vscode.CodeLensProvider` for `jupyter-notebook` and `python` document selectors.
+   - Scan the document lines. If a line contains `pd.merge` or `pd.DataFrame`, provide a CodeLens above it titled `✨ Visual Join` that executes `visual-join-builder.openFromCell`.
+
+
+
+   Read `docs/architecture.md` (specifically Decision 4 on Graceful Degradation) and do NOT invent Jupyter APIs.
+
+Task: Implement Phase 6 — Live Kernel Data.
+
+1. **Jupyter API Bridge (`src/JupyterKernel.ts`)**:
+   - Get the extension: `vscode.extensions.getExtension('ms-toolsai.jupyter')?.activate()`.
+   - **CRITICAL:** Do NOT hallucinate an `executeSilently` global. You must get the active notebook URI (`vscode.window.activeNotebookEditor?.notebook.uri`), then request the kernel: `jupyterApi.kernels.getKernel(uri)`.
+   - To discover DataFrames, use `kernel.executeHidden()` (or the exact equivalent to run code without modifying the notebook output) with this python string:
+     `import json, pandas as pd; print(json.dumps({k: [{'name': c, 'dtype': str(v[c].dtype), 'nullable': bool(v[c].isna().any())} for c in v.columns] for k, v in globals().items() if isinstance(v, pd.DataFrame)}))`
+   - For `executePreview(code)`, append `.head(5).to_html(index=False)` to the generated code and execute it silently, returning the HTML.
+
+2. **Table Discovery Service (`src/TableDiscovery.ts`)**:
+   - Create a polling service that calls `discoverTables()` every 5 seconds. Cache the result. If the schema changes, post a `loadTables` message to the Webview.
+   - Expose `forceRefresh()` for the manual refresh button.
+
+3. **UI Updates (`webview-ui/src/App.tsx` & `PreviewPanel.tsx`)**:
+   - Replace the mock sidebar tables with the real data from the `loadTables` message.
+   - If `jupyterApi` fails or kernel is dead, ensure the UI falls back to "Manual Mode" without crashing.
+   - Build `<PreviewPanel />` (a collapsible bottom panel). On expand, send `requestPreview` with the current `JoinState`, show a spinner, and render the returned HTML table.
+
+
+
+   Read `docs/checklist.md` and `docs/rules.md` (specifically Rule 13).
+
+Task: Implement Phase 7 — Polish and Publishing prep.
+
+1. **Clean `.vscodeignore`**:
+   - Ensure these exact lines exist to prevent bloat:
+     `webview-ui/src/`
+     `webview-ui/node_modules/`
+     `webview-ui/vite.config.ts`
+     `src/__tests__/`
+     `docs/`
+     `.git/`
+     `node_modules/`
+
+2. **Manifest Updates (`package.json`)**:
+   - Ensure `"engines": { "vscode": "^1.85.0" }`.
+   - Set `"icon": "media/icon.png"`.
+   - **CRITICAL (Rule 13):** The `vsce` package was renamed. Ensure scripts use: `"vsce:package": "npx @vscode/vsce package --no-dependencies"` and `"vsce:publish": "npx @vscode/vsce publish --no-dependencies"`.
+   - Add `"postinstall": "cd webview-ui && npm install"` and `"prebuild": "cd webview-ui && npm run build"`.
+
+3. **Error Boundaries**:
+   - Wrap the `<Canvas />` in `webview-ui/src/App.tsx` with a React Error Boundary so a crashed node doesn't white-screen the whole Webview.
+   - Ensure all `JupyterKernel.ts` API calls are wrapped in `try/catch` blocks that swallow errors gracefully and return empty schemas instead of crashing the Extension Host.
+
+execute the code/config changes above.
+
+

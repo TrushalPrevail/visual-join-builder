@@ -40,6 +40,11 @@ const scriptUri = webview.asWebviewUri(
 const scriptUri = '/webview-ui/build/assets/index.js';
 ```
 
+Webview options must also include strict roots:
+```typescript
+localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'webview-ui', 'build')]
+```
+
 ---
 
 ## 🔴 RULE 4: Content Security Policy Must Be Set
@@ -131,7 +136,7 @@ await vscode.workspace.applyEdit(edit);
 ## 🔴 RULE 8: Two Separate package.json Files, Two Separate node_modules
 
 - `package.json` at root = Extension Host dependencies (`@types/vscode`, `esbuild`, etc.)
-- `webview-ui/package.json` = React UI dependencies (`react`, `reactflow`, `tailwindcss`, etc.)
+- `webview-ui/package.json` = React UI dependencies (`react`, `@xyflow/react`, `tailwindcss`, etc.)
 
 Never cross-install. Never import a React component from `src/`. Never import a VS Code API from `webview-ui/src/`.
 
@@ -236,12 +241,14 @@ node.measured?.width, node.measured?.height
 The `vsce` npm package displays: *"vsce has been renamed to `@vscode/vsce`"*.
 
 ```json
-// ✅ Correct scripts in root package.json
+// ✅ Recommended scripts in root package.json
 "scripts": {
-  "package": "npx @vscode/vsce package --no-dependencies",
-  "publish": "npx @vscode/vsce publish --no-dependencies"
+  "vsce:package": "npx @vscode/vsce package --no-dependencies",
+  "vsce:publish": "npx @vscode/vsce publish --no-dependencies"
 }
 ```
+
+Do **not** overwrite scaffold build scripts like `"package"` that are used for extension compilation/prepublish flow.
 
 Always include `--no-dependencies` because esbuild already bundles everything. Without it, vsce will try to crawl `node_modules` and either error or bloat the `.vsix`.
 

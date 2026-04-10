@@ -1,4 +1,4 @@
-# PHASES.md — Step-by-Step Build Plan
+# phases.md — Step-by-Step Build Plan
 
 > Each phase has: a **goal**, a **definition of done**, an **exact AI prompt**, and **validation steps**. 
 > Only move to the next phase when the current one passes all validation steps.
@@ -85,7 +85,7 @@ export default defineConfig({
 @import "tailwindcss";
 
 @theme {
-  /* Map every CSS variable from UI_DESIGN.md into Tailwind's theme system */
+  /* Map every CSS variable from ui_design.md into Tailwind's theme system */
   --color-bg-base:       #0d0d0f;
   --color-bg-surface:    #141416;
   --color-bg-elevated:   #1c1c1f;
@@ -159,7 +159,7 @@ Open a `WebviewPanel` from a command. Load the compiled React bundle inside it s
 ### Exact AI Prompt
 
 ```
-Read docs/RULES.md fully before writing any code.
+Read docs/rules.md fully before writing any code.
 
 Task: Implement Phase 1.
 
@@ -169,14 +169,14 @@ Task: Implement Phase 1.
 
 2. Create `src/WebviewManager.ts`. This class must:
    - Use `vscode.window.createWebviewPanel()` with `viewColumn: vscode.ViewColumn.Beside`
-   - Enable `enableScripts: true` and set `localResourceRoots` to `[extensionUri]`
-   - Generate a fresh `nonce` per render using the getNonce() function from RULES.md
-   - Inject a strict CSP meta tag exactly as specified in RULES.md Rule 4
+   - Enable `enableScripts: true` and set `localResourceRoots` to `[vscode.Uri.joinPath(extensionUri, 'webview-ui', 'build')]`
+   - Generate a fresh `nonce` per render using the getNonce() function from rules.md
+   - Inject a strict CSP meta tag exactly as specified in rules.md Rule 4
    - Load the compiled React bundle using `webview.asWebviewUri()` pointing to `webview-ui/build/assets/index.js` and `webview-ui/build/assets/index.css`
    - Handle the panel being disposed (set a flag so we don't try to post to a dead panel)
    - Be a singleton: if the panel already exists, reveal it instead of creating a new one
 
-3. In `webview-ui/vite.config.ts`, apply the exact Rollup output config from RULES.md Rule 5 to remove filename hashes.
+3. In `webview-ui/vite.config.ts`, apply the exact Rollup output config from rules.md Rule 5 to remove filename hashes.
 
 4. In `webview-ui/src/main.tsx`, render a basic <App /> that shows a centered <h1>Visual Join Builder</h1> with a dark background (#0d0d0f) and white text, just to confirm loading works.
 
@@ -200,7 +200,7 @@ Establish reliable, typed two-way communication between the Extension Host and W
 ### Exact AI Prompt
 
 ```
-Read docs/RULES.md Rule 6 before writing any code.
+Read docs/rules.md Rule 6 before writing any code.
 
 Task: Implement Phase 2.
 
@@ -237,8 +237,7 @@ Task: Implement Phase 2.
 
 4. In `webview-ui/src/lib/vscodeApi.ts`, create the singleton:
    ```ts
-   import type { WebviewApi } from 'vscode-webview';
-   let api: WebviewApi<unknown> | undefined;
+   let api: ReturnType<typeof acquireVsCodeApi> | undefined;
    export function getVSCodeApi() {
      if (!api) api = acquireVsCodeApi();
      return api;
@@ -272,8 +271,8 @@ Build the visual canvas. Drag tables from sidebar onto canvas. Draw join lines. 
 ### Exact AI Prompt
 
 ```
-Read docs/UI_DESIGN.md fully before writing any code.
-Read docs/RULES.md Rules 8 and 10.
+Read docs/ui_design.md fully before writing any code.
+Read docs/rules.md Rules 8 and 10.
 
 Task: Implement Phase 3 — the Webview canvas UI.
 
@@ -331,9 +330,9 @@ Build these components exactly:
 
 5. `Canvas.tsx` — ReactFlow wrapper:
    - Accepts `onDrop` to add a new TableNode when a table is dragged from Sidebar
-   - Uses `useNodesState` and `useEdgesState` from reactflow
+   - Uses `useNodesState` and `useEdgesState` from `@xyflow/react`
    - When an edge is created (connect event), auto-sets joinType to 'inner'
-   - Background: `<Background variant="dots" color="#1e1e2e" />`
+   - Background: `<Background variant={BackgroundVariant.Dots} gap={[20, 20]} size={1.5} color="var(--color-border-subtle)" />`
 
 6. `Toolbar.tsx` — Top bar:
    - Output name input field (default: "result_df")
@@ -342,7 +341,7 @@ Build these components exactly:
    - "Insert to Notebook" primary button (accent color, disabled when no joins exist)
    - "Copy Code" secondary button
 
-Use the design tokens from UI_DESIGN.md. All colors must reference CSS variables, not hardcoded hex.
+Use the design tokens from ui_design.md. All colors must reference CSS variables, not hardcoded hex.
 ```
 
 ### Validation Steps
@@ -364,8 +363,8 @@ Implement the pure TypeScript `CodeGenerator` and wire it to the live canvas sta
 ### Exact AI Prompt
 
 ```
-Read docs/CODEGEN_SPEC.md fully before writing any code.
-Read docs/RULES.md Rules 9 and 10.
+Read docs/codegen_spec.md fully before writing any code.
+Read docs/rules.md Rules 9 and 10.
 
 Task: Implement Phase 4 — Code Generation Engine.
 
@@ -375,7 +374,7 @@ Task: Implement Phase 4 — Code Generation Engine.
    - `generatePySparkCode(state: JoinState): string`
    - A top-level `generateCode(state: JoinState): string` router that delegates based on `state.dialect`
 
-   Handle ALL edge cases from CODEGEN_SPEC.md:
+   Handle ALL edge cases from codegen_spec.md:
    - Chained multi-table joins (topological order)
    - Column name collisions (auto-suffix + rename)
    - Type mismatch warnings (emit a `# WARNING:` comment in generated code)
@@ -432,7 +431,7 @@ Wire the "Insert to Notebook" button to insert generated code into `.ipynb` cell
 ### Exact AI Prompt
 
 ```
-Read docs/RULES.md Rule 7 before writing any code.
+Read docs/rules.md Rule 7 before writing any code.
 
 Task: Implement Phase 5 — Code Insertion.
 
@@ -440,7 +439,7 @@ Task: Implement Phase 5 — Code Insertion.
    
    `insertCode(code: string): Promise<void>`:
    - Check if `vscode.window.activeNotebookEditor` is defined:
-     - YES: Insert a new Python code cell below `activeNotebookEditor.selections[0].end` using `vscode.WorkspaceEdit` + `vscode.NotebookEdit.insertCells()` exactly as in RULES.md Rule 7
+     - YES: Insert a new Python code cell below `activeNotebookEditor.selections[0].end` using `vscode.WorkspaceEdit` + `vscode.NotebookEdit.insertCells()` exactly as in rules.md Rule 7
      - NO: Check if `vscode.window.activeTextEditor` is defined:
        - YES: Insert code at `activeTextEditor.selection.active` using `activeTextEditor.edit()`
        - NO: Show `vscode.window.showWarningMessage('Open a notebook or Python file first.')`
@@ -475,7 +474,7 @@ Replace mock table data with real DataFrames discovered from the active Jupyter 
 ### Exact AI Prompt
 
 ```
-Read docs/ARCHITECTURE.md Decision 4 (Graceful Degradation) before writing any code.
+Read docs/architecture.md Decision 4 (Graceful Degradation) before writing any code.
 
 Task: Implement Phase 6 — Live Kernel Data.
 
@@ -553,7 +552,7 @@ Task: Implement Phase 7 — Polish and prepare for publishing.
    - Ensure `"engines": { "vscode": "^1.85.0" }` (minimum version that has NotebookEdit API)
    - Add keywords: ["jupyter", "pandas", "dataframe", "sql", "join", "data science", "visualization"]
    - Add categories: ["Data Science", "Notebooks", "Visualization", "Other"]
-   - Add a `"vsce:package"` script: `"vsce package --no-dependencies"`
+   - Add a `"vsce:package"` script: `"npx @vscode/vsce package --no-dependencies"`
 
 3. `README.md` — write a professional README with:
    - A GIF placeholder section labeled [DEMO GIF HERE]
@@ -569,13 +568,13 @@ Task: Implement Phase 7 — Polish and prepare for publishing.
 
 5. Error boundaries:
    - Wrap `<Canvas />` in a React ErrorBoundary that shows a "Canvas error — try refreshing" message
-   - All `JupyterKernel` calls must be wrapped in try/catch with fallback behavior documented in ARCHITECTURE.md Decision 4
+   - All `JupyterKernel` calls must be wrapped in try/catch with fallback behavior documented in architecture.md Decision 4
 
-6. Run `vsce package` and verify the resulting `.vsix` is under 5MB.
+6. Run `npx @vscode/vsce package --no-dependencies` and verify the resulting `.vsix` is under 5MB.
 ```
 
 ### Validation Steps
-- [ ] `vsce package` runs without errors.
+- [ ] `npx @vscode/vsce package --no-dependencies` runs without errors.
 - [ ] `.vsix` file is under 5MB.
 - [ ] Install the `.vsix` locally: `code --install-extension visual-join-builder-*.vsix`
 - [ ] Full end-to-end flow works on a fresh VS Code window with a clean Jupyter notebook.
