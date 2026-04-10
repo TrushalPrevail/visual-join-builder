@@ -1,5 +1,5 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { JoinType } from '../../../src/types/joinState';
 import type { JoinEdgeData } from './graphTypes';
 import { JoinTypePopover } from './JoinTypePopover';
@@ -38,8 +38,7 @@ export function JoinEdge({
   data,
 }: EdgeProps) {
   const edgeData = (data as (JoinEdgeData & { isNew?: boolean }) | undefined);
-  const [open, setOpen] = useState(false);
-  const [openedFromNew, setOpenedFromNew] = useState(false);
+  const [open, setOpen] = useState(() => Boolean(edgeData?.isNew));
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -48,13 +47,6 @@ export function JoinEdge({
     sourcePosition,
     targetPosition,
   });
-
-  useEffect(() => {
-    if (edgeData?.isNew && !openedFromNew) {
-      setOpen(true);
-      setOpenedFromNew(true);
-    }
-  }, [edgeData?.isNew, openedFromNew]);
 
   const joinType = edgeData?.joinType ?? 'inner';
   const joinTypeClass = useMemo(() => getJoinTypeColorClass(joinType), [joinType]);
