@@ -12,7 +12,7 @@ export function Sidebar({ tables, kernelActive, kernelName, onRefresh }: Sidebar
   const noTables = tables.length === 0;
 
   return (
-    <aside className="w-[240px] shrink-0 border-r border-border-subtle bg-bg-surface flex flex-col">
+    <aside className="w-[180px] shrink-0 border-r border-border-subtle bg-bg-surface flex flex-col">
       <div className="px-3 py-3 border-b border-border-subtle flex items-center justify-between">
         <span className="text-[10px] tracking-[0.1em] uppercase text-text-muted">DataFrames</span>
         <button

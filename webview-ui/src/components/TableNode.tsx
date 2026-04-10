@@ -23,12 +23,11 @@ function getDtypeStyles(dtype: string): string {
 }
 
 export function TableNode({ id, data, selected }: NodeProps<Node<TableNodeData>>) {
-  const nodeData = data as TableNodeData & { onDelete?: (nodeId: string) => void };
   const allSelected = data.table.columns.every((column) => data.selectedColumns[column.name]);
 
   return (
     <div
-      className={`w-[200px] rounded-lg border bg-bg-elevated ${selected ? 'border-border-focus ring-2 ring-accent-dim' : 'border-border-default'}`}
+      className={`w-[188px] rounded-lg border bg-bg-elevated ${selected ? 'border-border-focus ring-2 ring-accent-dim' : 'border-border-default'}`}
     >
       <div className="flex items-center justify-between border-b border-border-subtle px-3 py-2">
         <div className="flex items-center gap-2">
@@ -37,7 +36,7 @@ export function TableNode({ id, data, selected }: NodeProps<Node<TableNodeData>>
         </div>
         <button
           type="button"
-          onClick={() => nodeData.onDelete?.(id)}
+          onClick={() => data.onDelete(id)}
           className="text-text-muted hover:text-text-secondary"
         >
           ×

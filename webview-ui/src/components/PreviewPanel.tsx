@@ -1,18 +1,21 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { JoinState } from '../../../src/types/joinState';
 import { sendMessage, useVSCodeMessage } from '../hooks/useVSCodeMessage';
 
 interface PreviewPanelProps {
   joinState: JoinState;
   disabled: boolean;
+  autoExpandVersion?: number;
 }
 
-export function PreviewPanel({ joinState, disabled }: PreviewPanelProps) {
-  const [expanded, setExpanded] = useState(false);
+export function PreviewPanel({ joinState, disabled, autoExpandVersion }: PreviewPanelProps) {
+  const [manuallyExpanded, setManuallyExpanded] = useState(false);
+  const [collapsedAtAutoVersion, setCollapsedAtAutoVersion] = useState(0);
   const [loading, setLoading] = useState(false);
   const [html, setHtml] = useState('');
   const [rowCount, setRowCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const expanded = manuallyExpanded || Boolean(autoExpandVersion && autoExpandVersion > collapsedAtAutoVersion);
 
   useVSCodeMessage(
     useCallback((message) => {
@@ -48,14 +51,27 @@ export function PreviewPanel({ joinState, disabled }: PreviewPanelProps) {
   }, [disabled, joinState]);
 
   const handleToggle = useCallback(() => {
-    setExpanded((current) => {
-      const next = !current;
-      if (next) {
-        requestPreview();
-      }
-      return next;
-    });
-  }, [requestPreview]);
+    if (expanded) {
+      setManuallyExpanded(false);
+      setCollapsedAtAutoVersion(autoExpandVersion ?? 0);
+      return;
+    }
+
+    setManuallyExpanded(true);
+    requestPreview();
+  }, [autoExpandVersion, expanded, requestPreview]);
+
+  useEffect(() => {
+    if (
+      !autoExpandVersion
+      || autoExpandVersion <= collapsedAtAutoVersion
+      || disabled
+    ) {
+      return;
+    }
+
+    sendMessage({ command: 'requestPreview', payload: { joinState } });
+  }, [autoExpandVersion, collapsedAtAutoVersion, disabled, joinState]);
 
   return (
     <section className="border-t border-border-subtle bg-bg-surface">

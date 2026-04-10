@@ -16,6 +16,7 @@ export interface TableNodeData extends Record<string, unknown> {
   selectedColumns: Record<string, boolean>;
   onToggleColumn: (nodeId: string, columnName: string, checked: boolean) => void;
   onSelectAll: (nodeId: string, checked: boolean) => void;
+  onDelete: (nodeId: string) => void;
 }
 
 export interface JoinEdgeData extends Record<string, unknown> {

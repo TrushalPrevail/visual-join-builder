@@ -65,7 +65,7 @@ export function CodePanel({ code }: CodePanelProps) {
   const highlighted = useMemo(() => renderHighlightedCode(code), [code]);
 
   return (
-    <aside className="w-[320px] shrink-0 border-l border-border-subtle bg-bg-surface flex flex-col">
+    <aside className="w-[260px] shrink-0 border-l border-border-subtle bg-bg-surface flex flex-col">
       <div className="flex items-center justify-between border-b border-border-subtle px-3 py-2">
         <span className="text-[10px] tracking-[0.1em] uppercase text-text-muted">Generated Code</span>
         <button

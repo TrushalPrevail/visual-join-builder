@@ -7,6 +7,7 @@ import {
   addEdge,
   useEdgesState,
   useNodesState,
+  type ReactFlowInstance,
   type Connection,
   type Edge,
   type Node,
@@ -22,6 +23,7 @@ interface CanvasProps {
   tables: TableSchema[];
   clearVersion: number;
   onGraphChange: (nodes: Node<TableNodeData>[], edges: Edge<JoinEdgeData>[]) => void;
+  onJoinCreated?: () => void;
 }
 
 const nodeTypes = {
@@ -32,10 +34,11 @@ const edgeTypes = {
   joinEdge: JoinEdge,
 };
 
-export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
+export function Canvas({ tables, clearVersion, onGraphChange, onJoinCreated }: CanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<TableNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<JoinEdgeData>>([]);
   const joinTypeChangeRef = useRef<(edgeId: string, joinType: JoinType) => void>(() => undefined);
+  const reactFlowRef = useRef<ReactFlowInstance<Node<TableNodeData>, Edge<JoinEdgeData>> | null>(null);
 
   const onToggleColumn = useCallback((nodeId: string, columnName: string, checked: boolean) => {
     setNodes((currentNodes) =>
@@ -122,7 +125,8 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
         currentEdges,
       ),
     );
-  }, [onJoinTypeChange, setEdges]);
+    onJoinCreated?.();
+  }, [onJoinCreated, onJoinTypeChange, setEdges]);
 
   const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -143,7 +147,7 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
     setNodes((currentNodes) => {
       const nodeId = `${table.name}-${Date.now()}-${currentNodes.length}`;
       const tableColorClass = TABLE_COLOR_CLASSES[currentNodes.length % TABLE_COLOR_CLASSES.length] ?? 'bg-accent';
-      const position = { x: (currentNodes.length * 280) + 50, y: 100 };
+      const position = { x: (currentNodes.length * 360) + 80, y: 100 };
 
       return [
         ...currentNodes,
@@ -169,6 +173,20 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
   }, [edges, nodes, onGraphChange]);
 
   useEffect(() => {
+    if (nodes.length === 0) {
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      void reactFlowRef.current?.fitView({ padding: 0.3, duration: 220, maxZoom: 1.1 });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [nodes.length]);
+
+  useEffect(() => {
     setNodes([]);
     setEdges([]);
   }, [clearVersion, setEdges, setNodes]);
@@ -188,6 +206,9 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
         edgeTypes={edgeTypes}
         elementsSelectable={true}
         fitView
+        onInit={(instance) => {
+          reactFlowRef.current = instance;
+        }}
       >
         <Background
           variant={BackgroundVariant.Dots}

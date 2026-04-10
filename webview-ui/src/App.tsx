@@ -22,6 +22,7 @@ function App() {
   const [graphEdges, setGraphEdges] = useState<Edge<JoinEdgeData>[]>([]);
   const [clearVersion, setClearVersion] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [previewAutoExpandVersion, setPreviewAutoExpandVersion] = useState(0);
 
   useVSCodeMessage(
     useCallback((message) => {
@@ -78,6 +79,10 @@ function App() {
     sendMessage({ command: 'requestTables' });
   }, []);
 
+  const handleJoinCreated = useCallback(() => {
+    setPreviewAutoExpandVersion((current) => current + 1);
+  }, []);
+
   return (
     <main className="h-screen bg-bg-base text-text-primary flex flex-col">
       <Toolbar
@@ -93,9 +98,14 @@ function App() {
       />
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <CanvasErrorBoundary>
-          <Canvas tables={tables} clearVersion={clearVersion} onGraphChange={handleGraphChange} />
+          <Canvas
+            tables={tables}
+            clearVersion={clearVersion}
+            onGraphChange={handleGraphChange}
+            onJoinCreated={handleJoinCreated}
+          />
         </CanvasErrorBoundary>
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[220px]">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[180px]">
           <div className="pointer-events-auto h-full [&>aside]:!h-full [&>aside]:!w-full">
             <Sidebar
               tables={tables}
@@ -105,13 +115,17 @@ function App() {
             />
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-[300px]">
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-[260px]">
           <div className="pointer-events-auto h-full [&>aside]:!h-full [&>aside]:!w-full">
             <CodePanel code={generatedCode} />
           </div>
         </div>
       </div>
-      <PreviewPanel joinState={joinState} disabled={insertDisabled} />
+      <PreviewPanel
+        joinState={joinState}
+        disabled={insertDisabled}
+        autoExpandVersion={previewAutoExpandVersion}
+      />
     </main>
   );
 }

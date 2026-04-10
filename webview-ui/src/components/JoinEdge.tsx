@@ -21,10 +21,7 @@ function getJoinTypeColorClass(joinType: JoinType): string {
 }
 
 function getJoinTypeLabel(joinType: JoinType): string {
-  if (joinType === 'outer') {
-    return 'FULL OUTER';
-  }
-  return `${joinType.toUpperCase()} JOIN`;
+  return joinType.toUpperCase();
 }
 
 export function JoinEdge({
@@ -70,7 +67,7 @@ export function JoinEdge({
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
-            className={`rounded-full border bg-bg-overlay px-2 py-0.5 text-[11px] font-mono ${joinTypeClass}`}
+            className={`rounded-full border bg-bg-overlay px-1.5 py-[1px] text-[10px] font-mono ${joinTypeClass}`}
           >
             {getJoinTypeLabel(joinType)}
           </button>
@@ -84,7 +81,7 @@ export function JoinEdge({
               onClose={() => setOpen(false)}
               style={{
                 left: '50%',
-                top: 'calc(100% + 6px)',
+                top: 'calc(100% + 4px)',
                 transform: 'translateX(-50%)',
               }}
             />
