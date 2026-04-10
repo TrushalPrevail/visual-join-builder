@@ -117,7 +117,7 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
           ...connection,
           id: `join-${Date.now()}`,
           type: 'joinEdge',
-          data: { joinType: 'inner', onJoinTypeChange },
+          data: { joinType: 'inner', onJoinTypeChange, isNew: true },
         },
         currentEdges,
       ),
@@ -138,22 +138,19 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
       return;
     }
 
-    const bounds = event.currentTarget.getBoundingClientRect();
     const selectedColumns = Object.fromEntries(table.columns.map((column) => [column.name, true]));
 
     setNodes((currentNodes) => {
       const nodeId = `${table.name}-${Date.now()}-${currentNodes.length}`;
       const tableColorClass = TABLE_COLOR_CLASSES[currentNodes.length % TABLE_COLOR_CLASSES.length] ?? 'bg-accent';
+      const position = { x: (currentNodes.length * 280) + 50, y: 100 };
 
       return [
         ...currentNodes,
         {
           id: nodeId,
           type: 'tableNode',
-          position: {
-            x: event.clientX - bounds.left - 110,
-            y: event.clientY - bounds.top - 20,
-          },
+          position,
           data: {
             table,
             tableColorClass,
