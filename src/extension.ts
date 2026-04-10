@@ -4,10 +4,11 @@ import { WebviewManager } from './WebviewManager';
 class VisualJoinCodeLensProvider implements vscode.CodeLensProvider {
 	public provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
 		const lenses: vscode.CodeLens[] = [];
+		const pandasUsagePattern = /(pd\.[a-zA-Z_]+|import pandas|dataframe)/i;
 
 		for (let index = 0; index < document.lineCount; index++) {
 			const line = document.lineAt(index).text;
-			if (!line.includes('pd.merge') && !line.includes('pd.DataFrame')) {
+			if (!pandasUsagePattern.test(line)) {
 				continue;
 			}
 
