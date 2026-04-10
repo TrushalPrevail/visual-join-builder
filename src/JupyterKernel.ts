@@ -45,9 +45,14 @@ export interface PreviewExecutionResult {
 }
 
 export class JupyterKernel {
-	public static async discoverTables(): Promise<TableSchema[]> {
+	public static async discoverTables(): Promise<TableSchema[] | null> {
 		try {
-			const kernel = await this.getActiveKernel();
+			const editor = vscode.window.activeNotebookEditor ?? vscode.window.visibleNotebookEditors[0];
+			if (!editor) {
+				return null;
+			}
+
+			const kernel = await this.getKernelForUri(editor.notebook.uri);
 			if (!kernel) {
 				return [];
 			}
@@ -162,6 +167,10 @@ export class JupyterKernel {
 			return undefined;
 		}
 
+		return this.getKernelForUri(notebookUri);
+	}
+
+	private static async getKernelForUri(notebookUri: vscode.Uri): Promise<JupyterKernelApi | undefined> {
 		const jupyterExtension = vscode.extensions.getExtension('ms-toolsai.jupyter');
 		if (!jupyterExtension) {
 			return undefined;
