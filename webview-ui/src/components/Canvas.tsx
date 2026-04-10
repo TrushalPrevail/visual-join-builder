@@ -80,6 +80,13 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
     );
   }, [setNodes]);
 
+  const onDeleteNode = useCallback((nodeId: string) => {
+    setNodes((currentNodes) => currentNodes.filter((node) => node.id !== nodeId));
+    setEdges((currentEdges) =>
+      currentEdges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+    );
+  }, [setEdges, setNodes]);
+
   const onJoinTypeChange = useCallback((edgeId: string, joinType: JoinType) => {
     setEdges((currentEdges) =>
       currentEdges.map((edge) => {
@@ -153,11 +160,12 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
             selectedColumns,
             onToggleColumn,
             onSelectAll,
+            onDelete: onDeleteNode,
           },
         },
       ];
     });
-  }, [onSelectAll, onToggleColumn, setNodes, tables]);
+  }, [onDeleteNode, onSelectAll, onToggleColumn, setNodes, tables]);
 
   useEffect(() => {
     onGraphChange(nodes, edges);
@@ -181,6 +189,7 @@ export function Canvas({ tables, clearVersion, onGraphChange }: CanvasProps) {
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        elementsSelectable={true}
         fitView
       >
         <Background

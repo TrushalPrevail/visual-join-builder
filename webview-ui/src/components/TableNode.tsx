@@ -23,6 +23,7 @@ function getDtypeStyles(dtype: string): string {
 }
 
 export function TableNode({ id, data, selected }: NodeProps<Node<TableNodeData>>) {
+  const nodeData = data as TableNodeData & { onDelete?: (nodeId: string) => void };
   const allSelected = data.table.columns.every((column) => data.selectedColumns[column.name]);
 
   return (
@@ -34,7 +35,11 @@ export function TableNode({ id, data, selected }: NodeProps<Node<TableNodeData>>
           <span className={`h-2.5 w-2.5 rounded-full ${data.tableColorClass}`} aria-hidden="true" />
           <span className="font-mono text-sm font-semibold text-text-primary">{data.table.name}</span>
         </div>
-        <button type="button" className="text-text-muted hover:text-text-secondary">
+        <button
+          type="button"
+          onClick={() => nodeData.onDelete?.(id)}
+          className="text-text-muted hover:text-text-secondary"
+        >
           ×
         </button>
       </div>
