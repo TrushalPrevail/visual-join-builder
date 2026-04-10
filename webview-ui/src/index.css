@@ -30,12 +30,23 @@
   --color-join-outer: #22d3a5;
   --color-join-cross: #e879a0;
 
+  --color-dtype-int: #4da6ff;
+  --color-dtype-float: #a78bfa;
+  --color-dtype-str: #22d3a5;
+  --color-dtype-bool: #f97316;
+  --color-dtype-datetime: #f59e0b;
+  --color-dtype-other: #8a8a9a;
+
   --font-family-ui: 'Inter', -apple-system, sans-serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
+  --sidebar-width: 240px;
+  --toolbar-height: 48px;
+  --code-panel-width: 320px;
+  --preview-panel-height: 180px;
 }
 
 *,
