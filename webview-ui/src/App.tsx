@@ -23,6 +23,8 @@ function App() {
   const [clearVersion, setClearVersion] = useState(0);
   const [copied, setCopied] = useState(false);
   const [previewAutoExpandVersion, setPreviewAutoExpandVersion] = useState(0);
+  const [showTablesPanel, setShowTablesPanel] = useState(true);
+  const [showCodePanel, setShowCodePanel] = useState(true);
 
   useVSCodeMessage(
     useCallback((message) => {
@@ -105,20 +107,46 @@ function App() {
             onJoinCreated={handleJoinCreated}
           />
         </CanvasErrorBoundary>
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[180px]">
-          <div className="pointer-events-auto h-full [&>aside]:!h-full [&>aside]:!w-full">
-            <Sidebar
-              tables={tables}
-              kernelActive={kernelActive}
-              kernelName={kernelName}
-              onRefresh={handleRefreshTables}
-            />
+        <div className="pointer-events-none absolute inset-0 z-20">
+          <div className="pointer-events-auto absolute left-4 top-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowTablesPanel((current) => !current)}
+              className="rounded border border-border-default bg-bg-overlay px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover"
+            >
+              {showTablesPanel ? 'Hide Tables' : `Show Tables (${tables.length})`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCodePanel((current) => !current)}
+              className="rounded border border-border-default bg-bg-overlay px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover"
+            >
+              {showCodePanel ? 'Hide Code' : 'Show Code'}
+            </button>
           </div>
-        </div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-[260px]">
-          <div className="pointer-events-auto h-full [&>aside]:!h-full [&>aside]:!w-full">
-            <CodePanel code={generatedCode} />
-          </div>
+
+          {showTablesPanel && (
+            <div className="pointer-events-auto absolute left-4 top-14 h-[360px] w-[260px] max-w-[calc(100%-2rem)]">
+              <Sidebar
+                tables={tables}
+                kernelActive={kernelActive}
+                kernelName={kernelName}
+                onRefresh={handleRefreshTables}
+                floating
+                onClose={() => setShowTablesPanel(false)}
+              />
+            </div>
+          )}
+
+          {showCodePanel && (
+            <div className="pointer-events-auto absolute right-4 top-14 h-[360px] w-[340px] max-w-[calc(100%-2rem)]">
+              <CodePanel
+                code={generatedCode}
+                floating
+                onClose={() => setShowCodePanel(false)}
+              />
+            </div>
+          )}
         </div>
       </div>
       <PreviewPanel

@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 interface CodePanelProps {
   code: string;
+  floating?: boolean;
+  onClose?: () => void;
 }
 
 const TOKEN_REGEX = /(#[^\n]*)|('(?:\\.|[^'])*'|"(?:\\.|[^"])*")|\b(SELECT|JOIN|FROM|AS|import|duckdb|merge|join|select|how|left_on|right_on|on)\b/g;
@@ -59,26 +61,41 @@ function renderHighlightedCode(code: string): ReactNode {
   });
 }
 
-export function CodePanel({ code }: CodePanelProps) {
+export function CodePanel({ code, floating = false, onClose }: CodePanelProps) {
   const [copied, setCopied] = useState(false);
 
   const highlighted = useMemo(() => renderHighlightedCode(code), [code]);
+  const containerClass = floating
+    ? 'h-full w-full rounded-xl border border-border-default bg-bg-overlay/95 shadow-xl backdrop-blur flex flex-col'
+    : 'w-[260px] shrink-0 border-l border-border-subtle bg-bg-surface flex flex-col';
 
   return (
-    <aside className="w-[260px] shrink-0 border-l border-border-subtle bg-bg-surface flex flex-col">
+    <aside className={containerClass}>
       <div className="flex items-center justify-between border-b border-border-subtle px-3 py-2">
         <span className="text-[10px] tracking-[0.1em] uppercase text-text-muted">Generated Code</span>
-        <button
-          type="button"
-          onClick={() => {
-            void navigator.clipboard.writeText(code);
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1500);
-          }}
-          className="rounded border border-border-default px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover"
-        >
-          {copied ? 'Copied' : 'Copy'}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard.writeText(code);
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1500);
+            }}
+            className="rounded border border-border-default px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover"
+          >
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded border border-border-default px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover"
+              aria-label="Close code panel"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
       <div className="min-h-0 flex-1 overflow-auto p-3">
         <pre className="font-mono text-[13px] leading-relaxed text-text-code whitespace-pre">

@@ -6,22 +6,39 @@ interface SidebarProps {
   kernelActive: boolean;
   kernelName?: string;
   onRefresh: () => void;
+  floating?: boolean;
+  onClose?: () => void;
 }
 
-export function Sidebar({ tables, kernelActive, kernelName, onRefresh }: SidebarProps) {
+export function Sidebar({ tables, kernelActive, kernelName, onRefresh, floating = false, onClose }: SidebarProps) {
   const noTables = tables.length === 0;
+  const containerClass = floating
+    ? 'h-full w-full rounded-xl border border-border-default bg-bg-overlay/95 shadow-xl backdrop-blur flex flex-col'
+    : 'w-[180px] shrink-0 border-r border-border-subtle bg-bg-surface flex flex-col';
 
   return (
-    <aside className="w-[180px] shrink-0 border-r border-border-subtle bg-bg-surface flex flex-col">
+    <aside className={containerClass}>
       <div className="px-3 py-3 border-b border-border-subtle flex items-center justify-between">
         <span className="text-[10px] tracking-[0.1em] uppercase text-text-muted">DataFrames</span>
-        <button
-          type="button"
-          onClick={onRefresh}
-          className="text-xs rounded border border-border-default px-2 py-1 text-text-secondary hover:bg-bg-hover"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="text-xs rounded border border-border-default px-2 py-1 text-text-secondary hover:bg-bg-hover"
+          >
+            Refresh
+          </button>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded border border-border-default px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover"
+              aria-label="Close DataFrames panel"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
       <div className="flex-1 overflow-auto p-3 space-y-2">
         {noTables ? (
