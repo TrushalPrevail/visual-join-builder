@@ -1,5 +1,7 @@
 # Visual Join Builder
 
+![Visual Join Builder Demo](media/demo.gif)
+
 [☕ Buy me a coffee](https://ko-fi.com/trushalprevail)
 
 Visual Join Builder is a VS Code extension for building DataFrame joins visually and generating production-ready code for **Pandas**, **DuckDB**, and **PySpark**.

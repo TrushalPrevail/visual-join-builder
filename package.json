@@ -1,18 +1,25 @@
 {
-  "name": "visual-join-builder-",
-  "displayName": "Visual Join Builder ",
-  "description": "Visually join DataFrames and generate Pandas/SQL code.",
+  "name": "visual-join-builder",
+  "displayName": "Visual Join Builder",
+  "description": "Visually join DataFrames and generate Pandas, DuckDB, and PySpark code.",
+  "publisher": "trushalprevail",
   "sponsor": {
     "url": "https://ko-fi.com/trushalprevail"
   },
   "icon": "media/icon.png",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
-    "Other"
+    "Data Science",
+    "Machine Learning",
+    "Notebooks"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TrushalPrevail/visual-join-builder.git"
+  },
   "activationEvents": [
     "onCommand:visual-join-builder.open",
     "onCommand:visual-join-builder.openFromCell",
@@ -54,7 +61,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "@types/vscode": "^1.115.0",
+    "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.7.1",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
